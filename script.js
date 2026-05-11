@@ -48,13 +48,26 @@ function normStatus(raw) {
     .replace(/\bizim\b/g, "izin")
     .replace(/\s+/g, " ")
     .trim();
-  if (/sudah\s+(masuk|hadir|datang)/.test(r)) return "MASUK";
+
+  // hadir / masuk
+  if (/\b(sudah masuk|sudah hadir|sudah datang)\b/.test(r)) {
+    if (/izin.*siang/.test(r)) return "IZIN_SIANG";
+    if (/terlambat/.test(r)) return "IZIN_TERLAMBAT";
+    return "MASUK";
+  }
+
   if (/\bcuti\b/.test(r)) return "CUTI";
   if (/\balfa\b/.test(r)) return "ALFA";
   if (/\bsakit\b/.test(r)) return "SAKIT";
-  if (/izin\s+masuk\s+siang/.test(r)) return "IZIN_SIANG";
-  if (/izin\s+datang\s+terlambat/.test(r)) return "IZIN_TERLAMBAT";
+
+  if (/izin.*siang/.test(r)) return "IZIN_SIANG";
+
+  if (/izin.*terlambat|terlambat/.test(r)) {
+    return "IZIN_TERLAMBAT";
+  }
+
   if (/\bizin\b/.test(r)) return "IZIN_LAIN";
+
   return "LAIN";
 }
 function counted(s) {
@@ -62,53 +75,104 @@ function counted(s) {
 }
 
 function parse(text) {
-  const rows = [],
-    lines = text.split("\n"),
-    groups = [];
-  let cur = null;
-  for (const line of lines) {
-    const t = line.trim();
-    if (!t || /^\*/.test(t)) {
-      if (cur) {
-        groups.push(cur);
-        cur = null;
+  const rows = [];
+
+  // Normalize line ending
+  text = text.replace(/\r/g, "");
+
+  // Split lines
+  const lines = text.split("\n");
+
+  let buffer = [];
+
+  function processBuffer(raw) {
+    if (!raw) return;
+
+    // Bersihkan numbering depan
+    raw = raw
+      .replace(/^\s*\d+\.\s*/, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    // Cari status dalam tanda kurung terakhir
+    const match = raw.match(/\((.*?)\)\s*$/i);
+
+    if (!match) return;
+
+    const sRaw = match[1].trim();
+
+    // Ambil bagian sebelum (...)
+    let before = raw.slice(0, match.index).trim();
+
+    // Pisahkan nama & departemen
+    let name = "";
+    let dept = "";
+
+    const commaIndex = before.indexOf(",");
+
+    if (commaIndex !== -1) {
+      name = before.slice(0, commaIndex).trim();
+      dept = before.slice(commaIndex + 1).trim();
+    } else {
+      name = before.trim();
+    }
+
+    // Validasi minimal
+    if (!name) return;
+
+    const status = normStatus(sRaw);
+
+    // Skip yang hadir normal
+    if (status === "MASUK") return;
+
+    rows.push({
+      name,
+      dept,
+      sRaw,
+      status,
+    });
+  }
+
+  for (let line of lines) {
+    let t = line.trim();
+
+    // Skip kosong
+    if (!t) {
+      if (buffer.length) {
+        processBuffer(buffer.join(" "));
+        buffer = [];
       }
       continue;
     }
-    if (/^\d+\./.test(t)) {
-      if (cur) groups.push(cur);
-      cur = [t];
+
+    // Skip header *
+    if (/^\*.*\*$/.test(t)) {
+      if (buffer.length) {
+        processBuffer(buffer.join(" "));
+        buffer = [];
+      }
       continue;
     }
-    if (cur) cur.push(t);
-  }
-  if (cur) groups.push(cur);
-  for (const g of groups) {
-    const full = g
-      .join(" ")
-      .replace(/^\d+\.\s*/, "")
-      .replace(/\s+/g, " ")
-      .trim();
-    const pm = full.match(/\(([^)]+)\)\s*$/);
-    if (!pm) continue;
-    const sRaw = pm[1].trim();
-    const before = full
-      .slice(0, full.lastIndexOf("("))
-      .replace(/\s+/g, " ")
-      .trim();
-    const ci = before.indexOf(",");
-    let name, dept;
-    if (ci !== -1) {
-      name = before.slice(0, ci).trim();
-      dept = before.slice(ci + 1).trim();
+
+    // Jika line baru numbering
+    if (/^\s*\d+\./.test(t)) {
+      if (buffer.length) {
+        processBuffer(buffer.join(" "));
+      }
+      buffer = [t];
     } else {
-      name = before;
-      dept = "";
+      // Lanjutan multiline
+      if (buffer.length) {
+        buffer.push(t);
+      }
     }
-    const status = normStatus(sRaw);
-    if (status === "MASUK") continue;
-    rows.push({ name, dept, sRaw, status });
   }
+
+  // Process terakhir
+  if (buffer.length) {
+    processBuffer(buffer.join(" "));
+  }
+
   return rows;
 }
 
@@ -187,11 +251,7 @@ function renderTable(rows, q = "") {
   }</div></td>
   <td><div class="td-badge">
     ${badge(r.status, r.sRaw)}
-    ${
-      !counted(r.status)
-        ? '<span class="not-counted-tag">// tidak dihitung</span>'
-        : ""
-    }
+    ${!counted(r.status) ? '<span class="not-counted-tag"></span>' : ""}
   </div></td>
 </tr>`
     )
