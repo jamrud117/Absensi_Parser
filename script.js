@@ -220,6 +220,20 @@ function renderSummary(rows) {
     .join("");
 }
 
+function searchLabel(status, raw) {
+  const labels = {
+    SAKIT: "sakit",
+    ALFA: "alfa",
+    CUTI: "cuti",
+    IZIN_SIANG: "izin masuk siang",
+    IZIN_TERLAMBAT: "izin terlambat",
+    IZIN_LAIN: "izin",
+    LAIN: raw,
+  };
+
+  return (labels[status] || raw).toLowerCase();
+}
+
 function renderTable(rows, q = "") {
   const body = document.getElementById("tblBody");
   const f = q
@@ -230,7 +244,8 @@ function renderTable(rows, q = "") {
           r.name.toLowerCase().includes(keyword) ||
           r.dept.toLowerCase().includes(keyword) ||
           r.status.toLowerCase().includes(keyword) ||
-          r.sRaw.toLowerCase().includes(keyword)
+          r.sRaw.toLowerCase().includes(keyword) ||
+          searchLabel(r.status, r.sRaw).includes(keyword)
         );
       })
     : rows;
