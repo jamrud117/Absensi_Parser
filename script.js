@@ -223,11 +223,16 @@ function renderSummary(rows) {
 function renderTable(rows, q = "") {
   const body = document.getElementById("tblBody");
   const f = q
-    ? rows.filter(
-        (r) =>
-          r.name.toLowerCase().includes(q.toLowerCase()) ||
-          r.dept.toLowerCase().includes(q.toLowerCase())
-      )
+    ? rows.filter((r) => {
+        const keyword = q.toLowerCase();
+
+        return (
+          r.name.toLowerCase().includes(keyword) ||
+          r.dept.toLowerCase().includes(keyword) ||
+          r.status.toLowerCase().includes(keyword) ||
+          r.sRaw.toLowerCase().includes(keyword)
+        );
+      })
     : rows;
   if (!f.length) {
     body.innerHTML = `<tr><td colspan="4"><div class="empty-ph">
