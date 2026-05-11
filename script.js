@@ -55,7 +55,7 @@ function normStatus(raw) {
 
   // izin pulang cepat => tetap hadir
   if (/izin.*pulang cepat|pulang cepat/.test(r)) {
-    return "MASUK";
+    return "IZIN_PULANG_CEPAT";
   }
 
   // hadir normal
@@ -225,6 +225,7 @@ function badge(status, raw) {
     IZIN_SIANG: ["bdg-izin", "bi-clock", "IZIN MASUK SIANG"],
     IZIN_TERLAMBAT: ["bdg-other", "bi-clock-history", "IZIN TERLAMBAT"],
     IZIN_TIDAK_MASUK: ["bdg-other", "bi-person-x", "IZIN TIDAK MASUK"],
+    IZIN_PULANG_CEPAT: ["bdg-other", "bi-box-arrow-right", "IZIN PULANG CEPAT"],
     IZIN_LAIN: ["bdg-other", "bi-info-circle", "IZIN"],
     LAIN: ["bdg-other", "bi-question-circle", raw.toUpperCase()],
   };
