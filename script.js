@@ -53,6 +53,11 @@ function normStatus(raw) {
      HADIR / SUDAH MASUK
   ========================= */
 
+  // izin pulang cepat => tetap hadir
+  if (/izin.*pulang cepat|pulang cepat/.test(r)) {
+    return "MASUK";
+  }
+
   // hadir normal
   if (/\b(sudah masuk|sudah hadir|sudah datang)\b/.test(r)) {
     // izin datang siang
@@ -87,6 +92,7 @@ function normStatus(raw) {
   /* =========================
      IZIN KHUSUS
   ========================= */
+
   // izin masuk siang
   if (/izin.*siang/.test(r)) {
     return "IZIN_SIANG";
