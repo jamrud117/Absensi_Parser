@@ -87,12 +87,6 @@ function normStatus(raw) {
   /* =========================
      IZIN KHUSUS
   ========================= */
-
-  // izin pulang cepat
-  if (/izin.*(pulang cepat|pulang duluan|izin pulang)/.test(r)) {
-    return "IZIN_PULANG_CEPAT";
-  }
-
   // izin masuk siang
   if (/izin.*siang/.test(r)) {
     return "IZIN_SIANG";
@@ -111,13 +105,7 @@ function normStatus(raw) {
   return "LAIN";
 }
 function counted(s) {
-  return [
-    "SAKIT",
-    "ALFA",
-    "CUTI",
-    "IZIN_TIDAK_MASUK",
-    "IZIN_PULANG_CEPAT",
-  ].includes(s);
+  return ["SAKIT", "ALFA", "CUTI", "IZIN_TIDAK_MASUK"].includes(s);
 }
 
 function parse(text) {
@@ -231,7 +219,6 @@ function badge(status, raw) {
     IZIN_SIANG: ["bdg-izin", "bi-clock", "IZIN MASUK SIANG"],
     IZIN_TERLAMBAT: ["bdg-other", "bi-clock-history", "IZIN TERLAMBAT"],
     IZIN_TIDAK_MASUK: ["bdg-other", "bi-person-x", "IZIN TIDAK MASUK"],
-    IZIN_PULANG_CEPAT: ["bdg-other", "bi-box-arrow-right", "IZIN PULANG CEPAT"],
     IZIN_LAIN: ["bdg-other", "bi-info-circle", "IZIN"],
     LAIN: ["bdg-other", "bi-question-circle", raw.toUpperCase()],
   };
@@ -277,7 +264,6 @@ function searchLabel(status, raw) {
     IZIN_TERLAMBAT: "izin terlambat",
     IZIN_LAIN: "izin",
     IZIN_TIDAK_MASUK: "izin tidak masuk",
-    IZIN_PULANG_CEPAT: "izin pulang cepat",
     LAIN: raw,
   };
 
